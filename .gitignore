@@ -1,0 +1,42 @@
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+dist/
+
+# Rust
+target/
+
+# Go
+/bin/
+
+# C / C++
+*.o
+*.a
+*.so
+build/
+
+# ML artifacts
+*.pt
+*.ckpt
+*.safetensors
+data/
