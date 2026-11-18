@@ -1,0 +1,16 @@
+[project]
+name = "tiny-git"
+version = "0.1.0"
+description = "A tiny Git, written to learn how Git works"
+requires-python = ">=3.13"
+dependencies = []
+
+[project.scripts]
+tg = "tiny_git.cli:main"
+
+[dependency-groups]
+dev = ["pytest"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

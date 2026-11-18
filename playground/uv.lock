@@ -1,0 +1,24 @@
+version = 1
+revision = 2
+requires-python = ">=3.13"
+
+[[package]]
+name = "playground"
+version = "0.0.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "tiny-git" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "tiny-git", editable = "../projects/tiny-git" }]
+
+[[package]]
+name = "tiny-git"
+version = "0.1.0"
+source = { editable = "../projects/tiny-git" }
+
+[package.metadata]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pytest" }]

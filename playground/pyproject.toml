@@ -1,0 +1,13 @@
+# One Python environment where every tiny-tech project is installed in
+# editable mode: code changes in projects/ take effect immediately here.
+[project]
+name = "playground"
+version = "0.0.0"
+requires-python = ">=3.13"
+dependencies = ["tiny-git"]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+tiny-git = { path = "../projects/tiny-git", editable = true }
