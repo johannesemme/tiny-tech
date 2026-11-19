@@ -3,11 +3,13 @@
 A monorepo of small, from-scratch reimplementations of real technology,
 built to understand how things work.
 
+Website: https://johannesemme.github.io/tiny-tech/
+
 ## Projects
 
-| Project | What it is | Status |
-| ------- | ---------- | ------ |
-| [tiny-git](projects/tiny-git) | A minimal Git: commits, branches, checkout, merge | 🚧 |
+| Project | What it is | Notes | Status |
+| ------- | ---------- | ----- | ------ |
+| [tiny-git](projects/tiny-git) | A minimal Git: commits, branches, checkout, merge | [notes](projects/tiny-git/notes/) | 🚧 |
 
 ## Layout
 

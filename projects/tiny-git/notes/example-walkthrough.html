@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Git Boxes, Step by Step</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@600&display=swap">
+<style>
+/* Layout: one wide diagram, a step switcher above it, the box contents for the chosen step below. */
+:root {
+  --bg: #f6f7f9; --fg: #1a1e26; --muted: #5a6371; --line: #b9c0cc; --panel: #ffffff;
+  --save: #2f5bd3; --tree: #1d855a; --blob: #b25f14;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-head: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12151b; --fg: #e5e8ee; --muted: #9aa3b1; --line: #444b58; --panel: #1a1e26;
+  --save: #86a2ff; --tree: #52c58f; --blob: #e7a25e; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12151b; --fg: #e5e8ee; --muted: #9aa3b1; --line: #444b58; --panel: #1a1e26;
+  --save: #86a2ff; --tree: #52c58f; --blob: #e7a25e; color-scheme: dark }
+
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 48px; }
+main { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+h1 { font-family: var(--font-head); font-size: 1.7rem; margin: 0; text-wrap: balance; }
+.lede { margin: 0; color: var(--muted); max-width: 65ch; }
+.back { font-size: 0.9rem; color: var(--muted); }
+.back a { color: inherit; }
+
+.steps { display: flex; flex-wrap: wrap; gap: 8px; }
+.steps button { font: 500 0.95rem var(--font-body); color: var(--fg); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; cursor: pointer; }
+.steps button[aria-pressed="true"] { border-color: var(--fg); box-shadow: inset 0 0 0 1px var(--fg); }
+.steps button:focus-visible { outline: 2px solid var(--save); outline-offset: 2px; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 18px; font-size: 0.85rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 14px; height: 14px; border-radius: 3px; border: 2px solid; display: inline-block; }
+
+figure { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+.scroll { overflow-x: auto; }
+svg { display: block; width: 100%; min-width: 640px; height: auto; color: var(--fg); font-family: var(--font-body); }
+figcaption { font-size: 0.85rem; color: var(--muted); padding: 8px 6px 2px; }
+
+.box rect { stroke-width: 1.5; }
+.box.save rect { stroke: var(--save); fill: color-mix(in srgb, var(--save) 10%, var(--panel)); }
+.box.tree rect { stroke: var(--tree); fill: color-mix(in srgb, var(--tree) 10%, var(--panel)); }
+.box.blob rect { stroke: var(--blob); fill: color-mix(in srgb, var(--blob) 10%, var(--panel)); }
+.box .id { font-family: var(--font-mono); font-weight: 600; font-size: 13px; fill: currentColor; }
+.box .sub { font-size: 12px; fill: var(--muted); }
+.box .tag { font: 600 10px var(--font-body); letter-spacing: 0.06em; fill: var(--bg); }
+.box rect.tagbg { fill: var(--fg); stroke: none; }
+.box:not(.is-new) .tagbg, .box:not(.is-new) .tag { display: none; }
+.box.is-new rect { stroke-width: 3; }
+.edge { stroke: var(--muted); stroke-width: 1.5; fill: none; }
+.elabel { font-family: var(--font-mono); font-size: 12px; fill: var(--muted); }
+.note rect { fill: var(--fg); }
+.note text { fill: var(--bg); font: 600 13px var(--font-mono); }
+.note .edge { stroke: var(--fg); }
+#arrow path { fill: var(--muted); }
+#arrow-note path { fill: var(--fg); }
+[hidden] { display: none !important; }
+
+.summary { display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 0.95rem; }
+.summary b { font-variant-numeric: tabular-nums; }
+h2 { font-family: var(--font-head); font-size: 1.15rem; margin: 8px 0 0; }
+.contents { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-left: 4px solid; border-radius: 8px; padding: 10px 12px; min-width: 0; }
+.card.save { border-left-color: var(--save); } .card.tree { border-left-color: var(--tree); } .card.blob { border-left-color: var(--blob); }
+.card h3 { margin: 0 0 6px; font: 600 0.9rem var(--font-body); }
+.card h3 code { font-family: var(--font-mono); }
+.card pre { margin: 0; font: 12.5px/1.55 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; color: var(--fg); }
+.card p { margin: 6px 0 0; font-size: 0.85rem; color: var(--muted); }
+@media (prefers-reduced-motion: no-preference) { .box rect { transition: stroke-width .15s; } }
+</style>
+</head>
+<body>
+<main>
+  <p class="back"><a href="00-example-walkthrough.html">← Back to the written walkthrough</a></p>
+  <h1>What Git stores, step by step</h1>
+  <p class="lede">An interactive version of our example. Fingerprints are made up and shortened (like <code>#a1</code>); real ones are 40 characters. Pick a step to see which boxes it creates and which it reuses.</p>
+
+  <div class="steps" role="group" aria-label="Choose step">
+    <button id="step-1" data-goto="1" aria-pressed="false">1 · add A</button>
+    <button id="step-2" data-goto="2" aria-pressed="false">2 · folder 1 with B</button>
+    <button id="step-3" data-goto="3" aria-pressed="true">3 · edit A</button>
+  </div>
+
+  <div class="legend">
+    <span><i style="border-color:var(--save)"></i>save box (commit)</span>
+    <span><i style="border-color:var(--tree)"></i>folder box (tree)</span>
+    <span><i style="border-color:var(--blob)"></i>file box (blob)</span>
+    <span><i style="border-color:var(--fg);background:var(--fg)"></i>sticky note (branch, HEAD)</span>
+  </div>
+
+  <figure>
+    <div class="scroll">
+    <svg viewBox="0 0 960 560" role="img" aria-label="After step 3: three saves in a chain, S3 to S2 to S1. Each points to a root folder box. S2 and S3 share folder box f1, S1 and S2 share file box a1 (apple), and S3 points to the new file box a2 (apple pie).">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker>
+        <marker id="arrow-note" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker>
+      </defs>
+
+      <!-- sticky notes: one set per step -->
+      <g class="note" data-note="1">
+        <rect x="95" y="25" width="90" height="30" rx="5"/><text x="140" y="45" text-anchor="middle">main</text>
+        <rect x="255" y="25" width="80" height="30" rx="5"/><text x="295" y="45" text-anchor="middle">HEAD</text>
+        <line class="edge" x1="255" y1="40" x2="187" y2="40" marker-end="url(#arrow-note)"/>
+        <line class="edge" x1="140" y1="55" x2="140" y2="100" marker-end="url(#arrow-note)"/>
+      </g>
+      <g class="note" data-note="2">
+        <rect x="375" y="25" width="90" height="30" rx="5"/><text x="420" y="45" text-anchor="middle">main</text>
+        <rect x="535" y="25" width="80" height="30" rx="5"/><text x="575" y="45" text-anchor="middle">HEAD</text>
+        <line class="edge" x1="535" y1="40" x2="467" y2="40" marker-end="url(#arrow-note)"/>
+        <line class="edge" x1="420" y1="55" x2="420" y2="100" marker-end="url(#arrow-note)"/>
+      </g>
+      <g class="note" data-note="3">
+        <rect x="655" y="25" width="90" height="30" rx="5"/><text x="700" y="45" text-anchor="middle">main</text>
+        <rect x="815" y="25" width="80" height="30" rx="5"/><text x="855" y="45" text-anchor="middle">HEAD</text>
+        <line class="edge" x1="815" y1="40" x2="747" y2="40" marker-end="url(#arrow-note)"/>
+        <line class="edge" x1="700" y1="55" x2="700" y2="100" marker-end="url(#arrow-note)"/>
+      </g>
+
+      <!-- edges -->
+      <g data-step="1">
+        <line class="edge" x1="140" y1="158" x2="140" y2="223" marker-end="url(#arrow)"/>
+        <text class="elabel" x="148" y="195">tree</text>
+        <line class="edge" x1="165" y1="275" x2="262" y2="373" marker-end="url(#arrow)"/>
+        <text class="elabel" x="205" y="318" text-anchor="end">A.txt</text>
+      </g>
+      <g data-step="2">
+        <line class="edge" x1="345" y1="130" x2="217" y2="130" marker-end="url(#arrow)"/>
+        <text class="elabel" x="281" y="121" text-anchor="middle">parent</text>
+        <line class="edge" x1="420" y1="158" x2="420" y2="223" marker-end="url(#arrow)"/>
+        <text class="elabel" x="428" y="195">tree</text>
+        <line class="edge" x1="395" y1="275" x2="298" y2="373" marker-end="url(#arrow)"/>
+        <text class="elabel" x="356" y="318">A.txt</text>
+        <line class="edge" x1="445" y1="275" x2="542" y2="373" marker-end="url(#arrow)"/>
+        <text class="elabel" x="500" y="318">1/</text>
+        <line class="edge" x1="560" y1="425" x2="560" y2="493" marker-end="url(#arrow)"/>
+        <text class="elabel" x="568" y="463">B.txt</text>
+      </g>
+      <g data-step="3">
+        <line class="edge" x1="625" y1="130" x2="497" y2="130" marker-end="url(#arrow)"/>
+        <text class="elabel" x="561" y="121" text-anchor="middle">parent</text>
+        <line class="edge" x1="700" y1="158" x2="700" y2="223" marker-end="url(#arrow)"/>
+        <text class="elabel" x="708" y="195">tree</text>
+        <line class="edge" x1="675" y1="275" x2="578" y2="373" marker-end="url(#arrow)"/>
+        <text class="elabel" x="622" y="318" text-anchor="end">1/</text>
+        <line class="edge" x1="725" y1="275" x2="822" y2="373" marker-end="url(#arrow)"/>
+        <text class="elabel" x="782" y="318">A.txt</text>
+      </g>
+
+      <!-- boxes -->
+      <g class="box save" data-step="1"><rect x="65" y="102" width="150" height="56" rx="8"/>
+        <text class="id" x="140" y="126" text-anchor="middle">S1</text><text class="sub" x="140" y="145" text-anchor="middle">"add A"</text>
+        <rect class="tagbg" x="183" y="94" width="36" height="16" rx="4"/><text class="tag" x="201" y="106" text-anchor="middle">NEW</text></g>
+      <g class="box save" data-step="2"><rect x="345" y="102" width="150" height="56" rx="8"/>
+        <text class="id" x="420" y="126" text-anchor="middle">S2</text><text class="sub" x="420" y="145" text-anchor="middle">"add folder 1 with B"</text>
+        <rect class="tagbg" x="463" y="94" width="36" height="16" rx="4"/><text class="tag" x="481" y="106" text-anchor="middle">NEW</text></g>
+      <g class="box save" data-step="3"><rect x="625" y="102" width="150" height="56" rx="8"/>
+        <text class="id" x="700" y="126" text-anchor="middle">S3</text><text class="sub" x="700" y="145" text-anchor="middle">"edit A"</text>
+        <rect class="tagbg" x="743" y="94" width="36" height="16" rx="4"/><text class="tag" x="761" y="106" text-anchor="middle">NEW</text></g>
+
+      <g class="box tree" data-step="1"><rect x="75" y="225" width="130" height="50" rx="8"/>
+        <text class="id" x="140" y="246" text-anchor="middle">#r1</text><text class="sub" x="140" y="264" text-anchor="middle">root folder</text>
+        <rect class="tagbg" x="173" y="217" width="36" height="16" rx="4"/><text class="tag" x="191" y="229" text-anchor="middle">NEW</text></g>
+      <g class="box tree" data-step="2"><rect x="355" y="225" width="130" height="50" rx="8"/>
+        <text class="id" x="420" y="246" text-anchor="middle">#r2</text><text class="sub" x="420" y="264" text-anchor="middle">root folder</text>
+        <rect class="tagbg" x="453" y="217" width="36" height="16" rx="4"/><text class="tag" x="471" y="229" text-anchor="middle">NEW</text></g>
+      <g class="box tree" data-step="3"><rect x="635" y="225" width="130" height="50" rx="8"/>
+        <text class="id" x="700" y="246" text-anchor="middle">#r3</text><text class="sub" x="700" y="264" text-anchor="middle">root folder</text>
+        <rect class="tagbg" x="733" y="217" width="36" height="16" rx="4"/><text class="tag" x="751" y="229" text-anchor="middle">NEW</text></g>
+      <g class="box tree" data-step="2"><rect x="495" y="375" width="130" height="50" rx="8"/>
+        <text class="id" x="560" y="396" text-anchor="middle">#f1</text><text class="sub" x="560" y="414" text-anchor="middle">folder 1</text>
+        <rect class="tagbg" x="593" y="367" width="36" height="16" rx="4"/><text class="tag" x="611" y="379" text-anchor="middle">NEW</text></g>
+
+      <g class="box blob" data-step="1"><rect x="215" y="375" width="130" height="50" rx="8"/>
+        <text class="id" x="280" y="396" text-anchor="middle">#a1</text><text class="sub" x="280" y="414" text-anchor="middle">"apple"</text>
+        <rect class="tagbg" x="313" y="367" width="36" height="16" rx="4"/><text class="tag" x="331" y="379" text-anchor="middle">NEW</text></g>
+      <g class="box blob" data-step="2"><rect x="495" y="495" width="130" height="50" rx="8"/>
+        <text class="id" x="560" y="516" text-anchor="middle">#b1</text><text class="sub" x="560" y="534" text-anchor="middle">"banana"</text>
+        <rect class="tagbg" x="593" y="487" width="36" height="16" rx="4"/><text class="tag" x="611" y="499" text-anchor="middle">NEW</text></g>
+      <g class="box blob" data-step="3"><rect x="775" y="375" width="130" height="50" rx="8"/>
+        <text class="id" x="840" y="396" text-anchor="middle">#a2</text><text class="sub" x="840" y="414" text-anchor="middle">"apple pie"</text>
+        <rect class="tagbg" x="873" y="367" width="36" height="16" rx="4"/><text class="tag" x="891" y="379" text-anchor="middle">NEW</text></g>
+    </svg>
+    </div>
+    <figcaption id="caption"></figcaption>
+  </figure>
+
+  <div class="summary" id="summary"></div>
+
+  <h2>What's inside the new boxes</h2>
+  <div class="contents" id="contents"></div>
+</main>
+
+<script>
+const STEPS = {
+  1: {
+    caption: "Step 1: the first save. S1 has no parent. Its root folder lists one file, A.txt, whose content is in #a1.",
+    reused: "nothing (this is the first save)",
+    cards: [
+      ["blob", "#a1", "file box", "blob 6\\0apple\\n", "Made by git add A.txt."],
+      ["tree", "#r1", "root folder box", "tree <size>\\0\n100644 A.txt #a1", "Made by git commit, from the index."],
+      ["save", "S1", "save box", "commit <size>\\0\ntree #r1\nauthor Me <me@example.com> 1767268800 +0100\ncommitter Me <me@example.com> 1767268800 +0100\n\nadd A", "No parent line: there is no earlier save."],
+    ],
+  },
+  2: {
+    caption: "Step 2: S2 points back to S1. Its root folder has a new subfolder, 1/, and still points to the same #a1 for A.txt.",
+    reused: "#a1 (A.txt didn't change)",
+    cards: [
+      ["blob", "#b1", "file box", "blob 7\\0banana\\n", "Made by git add 1/B.txt."],
+      ["tree", "#f1", "folder box for folder 1", "tree <size>\\0\n100644 B.txt #b1", "Built first: the root needs its fingerprint."],
+      ["tree", "#r2", "root folder box", "tree <size>\\0\n040000 1     #f1\n100644 A.txt #a1", "Entries sorted by name, so 1 comes before A.txt."],
+      ["save", "S2", "save box", "commit <size>\\0\ntree #r2\nparent S1\nauthor Me <me@example.com> 1767355200 +0100\ncommitter Me <me@example.com> 1767355200 +0100\n\nadd folder 1 with B", "The parent line links S2 to S1."],
+    ],
+  },
+  3: {
+    caption: "Step 3: editing A creates a new file box, #a2. The old #a1 stays, because S1 and S2 still point to it. Folder 1 didn't change, so S2 and S3 share #f1.",
+    reused: "#f1 and everything in it",
+    cards: [
+      ["blob", "#a2", "file box", "blob 10\\0apple pie\\n", "New content, new fingerprint. #a1 is not changed."],
+      ["tree", "#r3", "root folder box", "tree <size>\\0\n040000 1     #f1\n100644 A.txt #a2", "Only the A.txt line differs from #r2."],
+      ["save", "S3", "save box", "commit <size>\\0\ntree #r3\nparent S2\nauthor Me <me@example.com> 1767441600 +0100\ncommitter Me <me@example.com> 1767441600 +0100\n\nedit A", ""],
+    ],
+  },
+};
+const TOTALS = { 1: 3, 2: 7, 3: 10 };
+
+function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+function show(n) {
+  document.querySelectorAll("[data-step]").forEach(el => {
+    const s = Number(el.dataset.step);
+    if (s > n) el.setAttribute("hidden", ""); else el.removeAttribute("hidden");
+    el.classList.toggle("is-new", s === n);
+  });
+  document.querySelectorAll("[data-note]").forEach(el => {
+    if (Number(el.dataset.note) === n) el.removeAttribute("hidden"); else el.setAttribute("hidden", "");
+  });
+  document.querySelectorAll("[data-goto]").forEach(b => b.setAttribute("aria-pressed", String(Number(b.dataset.goto) === n)));
+  const st = STEPS[n];
+  document.getElementById("caption").textContent = st.caption;
+  document.querySelector("svg").setAttribute("aria-label", st.caption);
+  document.getElementById("summary").innerHTML =
+    `<span>New boxes: <b>${st.cards.length}</b></span><span>Reused: <b>${esc(st.reused)}</b></span><span>Total in storage: <b>${TOTALS[n]}</b></span>`;
+  document.getElementById("contents").innerHTML = st.cards.map(([kind, id, what, body, note]) =>
+    `<div class="card ${kind}"><h3><code>${esc(id)}</code> · ${esc(what)}</h3><pre>${esc(body)}</pre>${note ? `<p>${esc(note)}</p>` : ""}</div>`
+  ).join("");
+}
+document.querySelectorAll("[data-goto]").forEach(b => b.addEventListener("click", () => show(Number(b.dataset.goto))));
+show(3);
+</script>
+</body>
+</html>
