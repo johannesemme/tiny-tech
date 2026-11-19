@@ -25,11 +25,19 @@ live inside the tiny-tech repo (in `playground/tiny-git/`) and be committed
 like normal files.
 
 Real `git` can still read a `tg` repo, which we use to check that `tg` is
-correct:
+correct. An analogy: Writing your own program that saves .docx files, the easiest way to check it is to open the file in Word. If Word opens it, your program got the format right. Real git plays the role of Word for us:
 
 ```sh
-git --git-dir=.tg --work-tree=. log
+git --git-dir=.tg symbolic-ref HEAD
 ```
+- `--git-dir=.tg` means “use the .tg folder as your repository” (instead of looking for .git).
+- `symbolic-ref HEAD` asks “which branch does HEAD point to?”
+
+If everything is in order, it answers:
+
+`refs/heads/main`
+
+That answer means Git accepted our folder as a repository and read our HEAD file correctly.
 
 ## Run
 
@@ -80,7 +88,7 @@ The commit author is read from the environment variables `TG_AUTHOR_NAME` and
 - `status`, `diff`, `rm`, `rebase`, `stash`, `tag`, `merge --abort`
 - Remotes: `clone`, `push`, `pull`, `fetch`
 - Committing a file deletion (that needs `rm`)
-- `.gitignore`: only `.git/` itself is skipped
+- `.gitignore`: only `.tg/` itself is skipped
 - Checking out a commit hash directly (detached HEAD), and deleting branches
 - Packfiles, config files, hooks
 - The `.git/` folder name: `tg` uses `.tg/` (same contents, see above)
