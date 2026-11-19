@@ -7,6 +7,7 @@ What we learned while building tiny-git, in order.
 | Note | About |
 | ---- | ----- |
 | [00-background](00-background.md) | Why Git exists, fingerprints, the three kinds of box, add vs commit |
+| [01-init](01-init.md) | `tg init`: the `.tg/` layout, HEAD, refs and the unborn branch |
 
 ## Examples
 

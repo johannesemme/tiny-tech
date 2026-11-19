@@ -6,8 +6,13 @@ the real `tg` command in it. Where possible, the result is checked with real
 """
 
 import subprocess
+import sys
+from pathlib import Path
 
 import pytest
+
+# Full path to .venv/bin/tg, so tests work even when the venv isn't activated (e.g. in VS Code).
+TG = str(Path(sys.executable).parent / "tg")
 
 
 @pytest.fixture
@@ -15,14 +20,17 @@ def tg(tmp_path):
     """Run `tg <args>` in the test's temporary folder."""
 
     def run(*args):
-        return subprocess.run(["tg", *args], cwd=tmp_path, capture_output=True, text=True)
+        return subprocess.run([TG, *args], cwd=tmp_path, capture_output=True, text=True)
 
     return run
 
 
 @pytest.fixture
 def git(tmp_path):
-    """Run real `git <args>` against the .tg/ folder in the test's temporary folder."""
+    """
+    Used to run real `git <args>` against the .tg/ folder in the test's temporary folder.
+    Purpose: To verify the state of the `.tg/` folder using real `git` commands.
+    """
 
     def run(*args):
         return subprocess.run(

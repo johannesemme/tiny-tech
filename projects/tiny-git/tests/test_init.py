@@ -1,6 +1,3 @@
-"""Step 1: tg init."""
-
-
 def test_init_succeeds(tg):
     result = tg("init")
     assert result.returncode == 0, result.stderr

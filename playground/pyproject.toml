@@ -11,3 +11,8 @@ package = false
 
 [tool.uv.sources]
 tiny-git = { path = "../projects/tiny-git", editable = true }
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+]
